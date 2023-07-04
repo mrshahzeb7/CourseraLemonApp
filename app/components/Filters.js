@@ -1,39 +1,34 @@
-import { useState } from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
-import { sections } from "../utils/content";
 
-export const Filters = ({ onChange }) => {
-  const [filterSelections, setFilterSelections] = useState(
-    sections.map(() => false),
-  );
-
-  const handleFiltersChange = async (index) => {
-    const arrayCopy = [...filterSelections];
-    arrayCopy[index] = !filterSelections[index];
-    setFilterSelections(arrayCopy);
-
-    onChange(arrayCopy);
-  };
-
+const Filters = ({ onChange, selections, sections }) => {
   return (
     <View style={styles.filtersContainer}>
       {sections.map((section, index) => (
         <TouchableOpacity
           key={index}
           onPress={() => {
-            handleFiltersChange(index);
+            onChange(index);
           }}
-          style={[
-            styles.item,
-            {
-              flex: 1 / filterSelections.length,
-              backgroundColor: filterSelections[index] ? "#EE9972" : "#495E57",
-            },
-          ]}
+          style={{
+            flex: 1 / sections.length,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 16,
+            backgroundColor: selections[index] ? "#495e57" : "#edefee",
+            borderRadius: 9,
+            marginRight: 15,
+          }}
         >
-          <Text style={{ color: filterSelections[index] ? "black" : "white" }}>
-            {section}
-          </Text>
+          <View>
+            <Text
+              style={{
+                fontFamily: "Karla-ExtraBold",
+                color: selections[index] ? "#edefee" : "#495e57",
+              }}
+            >
+              {section.charAt(0).toUpperCase() + section.slice(1)}
+            </Text>
+          </View>
         </TouchableOpacity>
       ))}
     </View>
@@ -42,16 +37,12 @@ export const Filters = ({ onChange }) => {
 
 const styles = StyleSheet.create({
   filtersContainer: {
-    backgroundColor: "green",
+    backgroundColor: "#fff",
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 16,
-  },
-  item: {
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "white",
+    paddingLeft: 15,
   },
 });
+
+export default Filters;

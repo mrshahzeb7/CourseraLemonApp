@@ -7,7 +7,7 @@ export async function createTable() {
     db.transaction(
       (tx) => {
         tx.executeSql(
-          "create table if not exists menuitems (id integer primary key not null, uuid text, title text, price text, category text);",
+          "create table if not exists menuitems (id integer primary key not null, name text, price text, description text, image text, category text);",
         );
       },
       reject,
@@ -15,17 +15,6 @@ export async function createTable() {
     );
   });
 }
-
-export async function getMenuItems() {
-  return new Promise((resolve) => {
-    db.transaction((tx) => {
-      tx.executeSql("select * from menuitems", [], (_, { rows }) => {
-        resolve(rows._array);
-      });
-    });
-  });
-}
-
 export function clearDatabase() {
   db.transaction((tx) => {
     tx.executeSql(
@@ -40,16 +29,31 @@ export function clearDatabase() {
     );
   });
 }
-export async function saveMenuItems(menuItems) {
+export async function getMenuItems() {
+  return new Promise((resolve) => {
+    db.transaction((tx) => {
+      tx.executeSql("select * from menuitems", [], (_, { rows }) => {
+        resolve(rows._array);
+      });
+    });
+  });
+}
+
+export function saveMenuItems(menuItems) {
   return new Promise((resolve, reject) => {
-    const values = menuItems
+    // const values = menuItems
+    //   .map(
+    //     (item) =>
+    //       `(${item.id}, '${item.title}', '${item.price}', '${item.category}')`,
+    //   )
+    //   .join(",");
+
+    const sql = `insert into menuitems (id, name, price, description, image, category) values ${menuItems
       .map(
         (item) =>
-          `(${item.id}, '${item.title}', '${item.price}', '${item.category}')`,
+          `("${item.id}", "${item.name}", "${item.price}", "${item.description}", "${item.image}", "${item.category}")`,
       )
-      .join(",");
-
-    const sql = `INSERT INTO menuitems (uuid, title, price, category) VALUES ${values}`;
+      .join(", ")}`;
 
     db.transaction(
       (tx) => {
@@ -59,37 +63,46 @@ export async function saveMenuItems(menuItems) {
       resolve,
     );
   });
+
+  db.transaction((tx) => {
+    tx.executeSql(
+      `insert into menuitems (id, name, price, description, image, category) values ${menuItems
+        .map(
+          (item) =>
+            `("${item.id}", "${item.name}", "${item.price}", "${item.description}", "${item.image}", "${item.category}")`,
+        )
+        .join(", ")}`,
+    );
+  });
 }
 
 export async function filterByQueryAndCategories(query, activeCategories) {
   return new Promise((resolve, reject) => {
     db.transaction((tx) => {
-      const categoryCondition =
-        activeCategories.length > 0
-          ? `category IN (${activeCategories.map(() => "?").join(",")})`
-          : "1";
-
-      const sql = `
-        SELECT *
-        FROM menuitems
-        WHERE title LIKE '%' || ? || '%'
-          AND ${categoryCondition}
-      `;
-      const params = [query, ...activeCategories];
       tx.executeSql(
-        sql,
-        params,
-        (_, result) => {
-          const filteredMenuItems = [];
-          for (let i = 0; i < result.rows.length; i++) {
-            filteredMenuItems.push(result.rows.item(i));
-          }
-          resolve(filteredMenuItems);
-        },
-        (_, error) => {
-          reject(error);
+        `select * from menuitems where name like ? and category in ('${activeCategories.join(
+          "','",
+        )}')`,
+        [`%${query}%`],
+        (_, { rows }) => {
+          resolve(rows._array);
         },
       );
-    });
+    }, reject);
+  });
+}
+
+export async function test(query, activeCategories) {
+  return new Promise((resolve, reject) => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        `select * from menuitems`,
+        [`%${query}%`],
+        (_, { rows }) => {
+          console.log(JSON.stringify(rows._array, null, 8));
+          resolve(rows._array);
+        },
+      );
+    }, reject);
   });
 }
